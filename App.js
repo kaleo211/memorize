@@ -1,114 +1,106 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
-import React from 'react';
+import React, {Component} from 'react';
 import {
-  SafeAreaView,
+  Animated,
+  Dimensions,
   StyleSheet,
-  ScrollView,
   View,
+  PanResponder,
   Text,
-  StatusBar,
 } from 'react-native';
+import {Card} from 'react-native-elements';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const App = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
+const words = ['あ', 'い', 'う', 'え', 'お'];
+
+export default class App extends Component {
+  constructor() {
+    super();
+    this.position = new Animated.ValueXY();
+    this.state = {
+      currentIndex: 0,
+    };
+    this.rotate = this.position.x.interpolate({
+      inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
+      outputRange: ['-10deg', '0deg', '10deg'],
+      extrapolate: 'clamp',
+    });
+    this.rotateAndTranslate = {
+      transform: [
+        {rotate: this.rotate},
+        ...this.position.getTranslateTransform(),
+      ],
+    };
+  }
+
+  componentWillMount() {
+    this.PanResponder = PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => true,
+      onPanResponderMove: (evt, gestureState) => {
+        this.position.setValue({x: gestureState.dx, y: gestureState.dy});
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx > 120) {
+          Animated.spring(this.position, {
+            toValue: {x: SCREEN_WIDTH + 100, y: gestureState.dy},
+          }).start(() => {
+            this.setState({currentIndex: this.state.currentIndex + 1}, () => {
+              this.position.setValue({x: 0, y: 0});
+            });
+          });
+        } else if (gestureState.dx < -120) {
+          Animated.spring(this.position, {
+            toValue: {x: -SCREEN_WIDTH - 100, y: gestureState.dy},
+          }).start(() => {
+            this.setState({currentIndex: this.state.currentIndex + 1}, () => {
+              this.position.setValue({x: 0, y: 0});
+            });
+          });
+        } else {
+          Animated.spring(this.position, {
+            toValue: {x: 0, y: 0},
+            friction: 4,
+          }).start();
+        }
+      },
+    });
+  }
+
+  render() {
+    return (
+      <View>
+        <Animated.View
+          {...this.PanResponder.panHandlers}
+          style={[styles.animatedCard, this.rotateAndTranslate]}>
+          <View style={styles.card}>
+            <Text style={styles.word}>{words[0]}</Text>
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
-};
+        </Animated.View>
+      </View>
+    );
+  }
+}
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
+  animatedCard: {
+    height: SCREEN_HEIGHT - 360,
+    width: SCREEN_WIDTH,
+    paddingHorizontal: 30,
+    paddingVertical: 80,
     position: 'absolute',
-    right: 0,
   },
-  body: {
-    backgroundColor: Colors.white,
+  card: {
+    height: SCREEN_HEIGHT - 360,
+    width: SCREEN_WIDTH - 60,
+    resizeMode: 'cover',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: 'grey',
+    backgroundColor: 'white',
+    borderWidth: 1,
   },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
+  word: {
+    fontSize: 64,
   },
 });
-
-export default App;
