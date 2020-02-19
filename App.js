@@ -7,7 +7,6 @@ import {
   PanResponder,
   Text,
 } from 'react-native';
-import {Card} from 'react-native-elements';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
